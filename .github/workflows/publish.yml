@@ -19,6 +19,9 @@ jobs:
       with:
         node-version: 20.x
         registry-url: "https://registry.npmjs.org/"
+    
+    - name: Enable PNPM
+      run: corepack enable
 
     - name: Install Dependencies
       run: pnpm install
@@ -48,6 +51,9 @@ jobs:
       with:
         node-version: 20.x
         registry-url: "https://npm.pkg.github.com"
+
+    - name: Enable PNPM
+      run: corepack enable
 
     - name: Install Dependencies
       run: pnpm install
