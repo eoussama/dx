@@ -17,14 +17,22 @@
     "eslint"
   ],
   "exports": {
-    ".": "./src/index.js",
-    "./core": "./src/core.js"
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
   },
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
   "bin": {
     "dx": "./src/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "node src/cli.js build",
+    "build": "unbuild",
+    "prepack": "unbuild",
     "lint": "node src/cli.js lint",
     "fix": "node src/cli.js lint --fix"
   },
