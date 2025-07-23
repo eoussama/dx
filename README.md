@@ -37,7 +37,35 @@ yarn add @eoussama/dx
 
 ## Usage
 
-Create an `eslint.config.js` file at the root of your project:
+### Quick Start
+
+1. **Initialize the configuration:**
+   ```bash
+   npx @eoussama/dx init
+   ```
+
+   This creates an `eslint.config.js` file with the default configuration:
+   ```js
+   import dx from "@eoussama/dx";
+
+
+
+   export default dx();
+   ```
+
+2. **Run the linter:**
+   ```bash
+   npx dx lint
+   ```
+
+3. **Auto-fix issues:**
+   ```bash
+   npx dx lint --fix
+   ```
+
+### Manual Setup (Alternative)
+
+You can also manually create an `eslint.config.js` file at the root of your project:
 
 ```js
 import dx from "@eoussama/dx";
@@ -71,10 +99,27 @@ export default dx({
 });
 ```
 
-Now you can run the "dx" binary to run the linter.
+### CLI Commands
+
+After installation, you can use the following commands:
 
 ```bash
-pnpm dx
+# Initialize eslint.config.js (recommended first step)
+npx dx init
+
+# Run ESLint on your project
+npx dx lint
+
+# Run ESLint and auto-fix issues
+npx dx lint --fix
+
+# Get help
+npx dx --help
+npx dx init --help
+npx dx lint --help
+
+# Force overwrite existing config file
+npx dx init --force
 ```
 
 ## Development
