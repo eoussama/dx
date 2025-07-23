@@ -1,8 +1,7 @@
 <p align="center">
-  <img width="100" src="https://raw.githubusercontent.com/eoussama/dx/main/assets/dx.svg">
+  <img width="100" src="https://github.com/eoussama/dx/blob/main/assets/logo.png?raw=true">
 </p>
 
-<h1 align="center">DX</h1>
 <p align="center">Personal developer-experience configs.</p>
 
 <p align="center">
