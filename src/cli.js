@@ -16,13 +16,18 @@ async function main() {
         await ESLint.outputFixes(results);
 
       const fmt = await eslint.loadFormatter("stylish");
+
+      // eslint-disable-next-line no-console
       console.log(fmt.format(results));
 
       const errorCount = results.reduce((s, r) => s + r.errorCount, 0);
-      if (errorCount)
+
+      if (errorCount) {
         exit(1);
+      }
     }
     else {
+      // eslint-disable-next-line no-console
       console.log("Usage: dx <lint [--fix]>");
     }
   }
