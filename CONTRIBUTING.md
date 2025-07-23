@@ -54,7 +54,6 @@ All JavaScript/TypeScript functions, classes, and methods must use the following
  *
  * @param {import("@antfu/eslint-config").Options} [options] Antfu's config options.
  * @returns {import("eslint").Linter.FlatConfig[]} The final config object.
- *
  */
 ```
 
