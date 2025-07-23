@@ -12,8 +12,9 @@ async function main() {
       const eslint = new ESLint({ overrideConfigFile: "eslint.config.js" });
       const results = await eslint.lintFiles(["."]);
 
-      if (rest.includes("--fix"))
+      if (rest.includes("--fix")) {
         await ESLint.outputFixes(results);
+      }
 
       const fmt = await eslint.loadFormatter("stylish");
 
