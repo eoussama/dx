@@ -30,15 +30,15 @@ export default function dx(options = {}) {
 
       // Stylistic
       "yaml/indent": "off",
-      "style/no-multiple-empty-lines": ["error", { max: 3, maxBOF: 0, maxEOF: 1 }],
+      "style/no-multiple-empty-lines": ["warn", { max: 3, maxBOF: 0, maxEOF: 1 }],
       "import/newline-after-import": ["warn", { count: 3, exactCount: true, considerComments: true }],
 
       // Typescript
       "@typescript-eslint/consistent-type-definitions": "off",
 
       // Documentation
-      "jsdoc/require-returns-description": ["error"],
-      "jsdoc/require-jsdoc": ["error", {
+      "jsdoc/require-returns-description": ["warn"],
+      "jsdoc/require-jsdoc": ["warn", {
         publicOnly: true,
         require: {
           FunctionDeclaration: true,
@@ -48,7 +48,7 @@ export default function dx(options = {}) {
         },
       }],
       "jsdoc/tag-lines": [
-        "error",
+        "warn",
         "any",
         {
           startLines: 1,
@@ -60,12 +60,12 @@ export default function dx(options = {}) {
         },
       ],
 
-      "jsdoc/require-description": ["error", { descriptionStyle: "any" }],
-      "jsdoc/require-param": ["error"],
-      "jsdoc/require-returns": ["error", {
+      "jsdoc/require-description": ["warn", { descriptionStyle: "any" }],
+      "jsdoc/require-param": ["warn"],
+      "jsdoc/require-returns": ["warn", {
         forceReturnsWithAsync: true,
       }],
-      "jsdoc/require-param-description": ["error"],
+      "jsdoc/require-param-description": ["warn"],
     },
 
     ...options,
