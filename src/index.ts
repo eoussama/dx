@@ -6,14 +6,12 @@ import antfu from "@antfu/eslint-config";
  * @description
  * Personal DX config.
  *
- * @param {import("@antfu/eslint-config").Options} [options] Antfu's config options.
- * @returns {import("eslint").Linter.FlatConfig[]} The final config object.
+ * @param options - Overriding options.
+ * @returns The final config object.
  */
-export default function dx(options = {}) {
+export default function dx(options?: Parameters<typeof antfu>[0]) {
   return antfu({
     pnpm: true,
-
-    javascript: true,
     typescript: true,
 
     stylistic: {
