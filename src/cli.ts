@@ -91,10 +91,11 @@ async function initConfig({ force }: { force: boolean }): Promise<void> {
     // Create the config file content
     const configContent = `import dx from "@eoussama/dx";
 
+
+
 export default dx();
 `;
 
-    // Write the file
     writeFileSync(configPath, configContent, "utf8");
 
     if (force && existsSync(configPath)) {
