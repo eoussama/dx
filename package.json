@@ -31,8 +31,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "unbuild",
-    "prepack": "unbuild",
+    "build": "pnpm run lint && unbuild",
+    "prepack": "pnpm run build",
     "lint": "node src/cli.js lint",
     "fix": "node src/cli.js lint --fix"
   },
