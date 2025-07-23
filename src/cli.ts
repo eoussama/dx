@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { spawn } from "node:child_process";
+import { existsSync, writeFileSync } from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 import { Command } from "commander";
@@ -75,10 +77,61 @@ async function runESLint({ fix }: { fix: boolean }): Promise<void> {
   }
 }
 
+async function initConfig({ force }: { force: boolean }): Promise<void> {
+  try {
+    const configPath = path.resolve(process.cwd(), "eslint.config.js");
+
+    // Check if file already exists
+    if (existsSync(configPath) && !force) {
+      console.error("❌ eslint.config.js already exists!");
+      console.error("💡 Use --force to overwrite the existing file.");
+      process.exit(1);
+    }
+
+    // Create the config file content
+    const configContent = `import dx from "@eoussama/dx";
+
+export default dx();
+`;
+
+    // Write the file
+    writeFileSync(configPath, configContent, "utf8");
+
+    if (force && existsSync(configPath)) {
+      // eslint-disable-next-line no-console
+      console.log("✅ eslint.config.js overwritten successfully!");
+    }
+    else {
+      // eslint-disable-next-line no-console
+      console.log("✅ eslint.config.js created successfully!");
+    }
+
+    // eslint-disable-next-line no-console
+    console.log("💡 You can now run 'dx lint' to check your code.");
+  }
+  catch (error) {
+    if (error instanceof Error) {
+      console.error("❌ Error creating config file:", error.message);
+    }
+    else {
+      console.error("❌ Unknown error:", error);
+    }
+    process.exit(1);
+  }
+}
+
 program
   .name("dx")
   .description("Developer experience helper CLI")
   .version(packageJson.version);
+
+program
+  .command("init")
+  .description("Create eslint.config.js file with @eoussama/dx configuration")
+  .option("--force", "Overwrite existing eslint.config.js file", false)
+  .action(async (opts) => {
+    await initConfig({ force: opts.force });
+  });
 
 program
   .command("lint")
