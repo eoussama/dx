@@ -8,7 +8,6 @@ import antfu from "@antfu/eslint-config";
  *
  * @param {import("@antfu/eslint-config").Options} [options] Antfu's config options.
  * @returns {import("eslint").Linter.FlatConfig[]} The final config object.
- *
  */
 export default function dx(options = {}) {
   return antfu({
@@ -32,12 +31,20 @@ export default function dx(options = {}) {
       "yaml/indent": "off",
       "style/no-multiple-empty-lines": ["warn", { max: 3, maxBOF: 0, maxEOF: 1 }],
       "import/newline-after-import": ["warn", { count: 3, exactCount: true, considerComments: true }],
+      "@stylistic/padding-line-between-statements": [
+        "error",
+        { blankLine: "always", prev: "*", next: "return" },
+        { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
+        { blankLine: "any", prev: ["const", "let", "var"], next: ["const", "let", "var"] },
+        { blankLine: "always", prev: "directive", next: "*" },
+        { blankLine: "any", prev: "directive", next: "directive" },
+        { blankLine: "always", prev: ["case", "default"], next: "*" },
+      ],
 
       // Typescript
       "@typescript-eslint/consistent-type-definitions": "off",
 
       // Documentation
-      "jsdoc/require-returns-description": ["warn"],
       "jsdoc/require-jsdoc": ["warn", {
         publicOnly: true,
         require: {
@@ -57,7 +64,7 @@ export default function dx(options = {}) {
           count: 1,
           tags: {
             param: { lines: "never" },
-            returns: { lines: "always" },
+            returns: { lines: "never" },
           },
         },
       ],
