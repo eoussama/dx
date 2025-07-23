@@ -29,6 +29,8 @@ export default function dx(options = {}) {
 
       // Stylistic
       "yaml/indent": "off",
+      "curly": "warn",
+      "style/curly-newline": "warn",
       "style/no-multiple-empty-lines": ["warn", { max: 3, maxBOF: 0, maxEOF: 1 }],
       "import/newline-after-import": ["warn", { count: 3, exactCount: true, considerComments: true }],
       "@stylistic/padding-line-between-statements": [
