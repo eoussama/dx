@@ -2,9 +2,10 @@
 
 import path from "node:path";
 import process from "node:process";
-
 import { Command } from "commander";
+
 import { ESLint } from "eslint";
+import packageJson from "../package.json";
 
 
 
@@ -37,7 +38,7 @@ async function runESLint({ fix }: { fix: boolean }): Promise<void> {
 program
   .name("dx")
   .description("Developer experience helper CLI")
-  .version("1.0.0");
+  .version(packageJson.version);
 
 program
   .command("lint")
