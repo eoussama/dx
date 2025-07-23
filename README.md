@@ -41,7 +41,7 @@ yarn add @eoussama/dx
 
 1. **Initialize the configuration:**
    ```bash
-   npx @eoussama/dx init
+   pnpx @eoussama/dx init
    ```
 
    This creates an `eslint.config.js` file with the default configuration:
@@ -55,12 +55,12 @@ yarn add @eoussama/dx
 
 2. **Run the linter:**
    ```bash
-   npx dx lint
+   pnpx dx lint
    ```
 
 3. **Auto-fix issues:**
    ```bash
-   npx dx lint --fix
+   pnpx dx lint --fix
    ```
 
 ### Manual Setup (Alternative)
@@ -105,21 +105,21 @@ After installation, you can use the following commands:
 
 ```bash
 # Initialize eslint.config.js (recommended first step)
-npx dx init
+pnpx dx init
 
 # Run ESLint on your project
-npx dx lint
+pnpx dx lint
 
 # Run ESLint and auto-fix issues
-npx dx lint --fix
+pnpx dx lint --fix
 
 # Get help
-npx dx --help
-npx dx init --help
-npx dx lint --help
+pnpx dx --help
+pnpx dx init --help
+pnpx dx lint --help
 
 # Force overwrite existing config file
-npx dx init --force
+pnpx dx init --force
 ```
 
 ## Development
