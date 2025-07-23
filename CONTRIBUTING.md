@@ -23,3 +23,39 @@ We have a [Code of Conduct](CODE_OF_CONDUCT.md) that we expect all contributors 
    ```bash
    git checkout -b feat/your-feature-name
    ```
+
+## JSDoc Comment Format
+
+All JavaScript/TypeScript functions, classes, and methods must use the following JSDoc format:
+
+```
+/**
+* @description
+* <content>
+*
+* @param1 <content>
+* @param2 <content>
+* @param3 <content>
+*
+* @returns <content>
+*/
+```
+
+- The `@description` tag is required and should be followed by a blank line.
+- Each `@param` tag should be on its own line, with no blank lines between params.
+- The `@returns` tag should be separated from the params by a blank line.
+- No extra indentation or spaces before asterisks.
+- Example (from `src/index.js`):
+
+```js
+/**
+ * @description
+ * Personal DX config.
+ *
+ * @param {import("@antfu/eslint-config").Options} [options] Antfu's config options.
+ * @returns {import("eslint").Linter.FlatConfig[]} The final config object.
+ *
+ */
+```
+
+The linter will enforce this format as much as possible. See `.eslintrc` for details.
