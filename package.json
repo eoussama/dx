@@ -1,7 +1,7 @@
 {
   "name": "@eoussama/dx",
   "type": "module",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0",
   "description": "Personal developer-experience configs.",
   "author": "eoussama",
@@ -25,7 +25,7 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "bin": {
-    "dx": "./src/cli.js"
+    "dx": "./dist/cli.cjs"
   },
   "files": [
     "dist"
@@ -33,14 +33,16 @@
   "scripts": {
     "build": "unbuild",
     "prepack": "pnpm run build",
-    "lint": "node src/cli.js lint",
-    "fix": "node src/cli.js lint --fix"
+    "lint": "node dist/cli.cjs lint",
+    "fix": "node dist/cli.cjs lint --fix"
   },
   "dependencies": {
     "@antfu/eslint-config": "^4.17.0"
   },
   "devDependencies": {
     "@eslint-react/eslint-plugin": "^1.52.3",
+    "@types/node": "^24.1.0",
+    "commander": "^14.0.0",
     "eslint": "^9.0.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
