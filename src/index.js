@@ -25,7 +25,7 @@ export default function dx(options = {}) {
 
     rules: {
       // Linting
-      "no-console": "off",
+      "no-console": "warn",
       "pnpm/json-enforce-catalog": "off",
 
       // Stylistic
@@ -41,10 +41,12 @@ export default function dx(options = {}) {
       "jsdoc/require-jsdoc": ["warn", {
         publicOnly: true,
         require: {
-          FunctionDeclaration: true,
           ClassDeclaration: true,
-          MethodDefinition: true,
+          ClassExpression: true,
           ArrowFunctionExpression: true,
+          FunctionDeclaration: true,
+          FunctionExpression: true,
+          MethodDefinition: true,
         },
       }],
       "jsdoc/tag-lines": [
