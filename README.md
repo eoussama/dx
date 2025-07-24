@@ -5,9 +5,9 @@
 <p align="center">Personal developer-experience configs.</p>
 
 <p align="center">
-    <img src="https://img.shields.io/github/license/eoussama/dx" />
-    <img src="https://github.com/eoussama/dx/actions/workflows/publish.yml/badge.svg" />
-    <img src="https://img.shields.io/npm/v/%40eoussama%2Fdx" />
+    <a href="https://github.com/eoussama/dx/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/eoussama/dx" /></a>
+    <a href="https://github.com/eoussama/dx/actions/workflows/publish.yml" target="_blank"><img src="https://github.com/eoussama/dx/actions/workflows/publish.yml/badge.svg" /></a>
+    <a href="https://www.npmjs.com/package/@eoussama/dx" target="_blank"><img src="https://img.shields.io/npm/v/%40eoussama%2Fdx" /></a>
     <img src="https://img.shields.io/github/languages/code-size/eoussama/dx" />
 </p>
 
