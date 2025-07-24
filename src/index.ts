@@ -22,7 +22,7 @@ export default function dx(options?: Parameters<typeof antfu>[0]) {
 
     rules: {
       // Linting
-      "no-console": "warn",
+      "no-console": "error",
       "pnpm/json-enforce-catalog": "off",
 
       // Stylistic
@@ -42,6 +42,7 @@ export default function dx(options?: Parameters<typeof antfu>[0]) {
       ],
 
       // Typescript
+      "ts/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-definitions": "off",
 
       // Documentation
