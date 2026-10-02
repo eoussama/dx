@@ -45,16 +45,17 @@ All JavaScript/TypeScript functions, classes, and methods must use the following
 - Each `@param` tag should be on its own line, with no blank lines between params.
 - The `@returns` tag should be separated from the params by a blank line.
 - No extra indentation or spaces before asterisks.
-- Example (from `src/index.js`):
+- Example (from `src/index.ts`):
 
-```js
+```ts
 /**
  * @description
  * Personal DX config.
  *
- * @param {import("@antfu/eslint-config").Options} [options] Antfu's config options.
- * @returns {import("eslint").Linter.FlatConfig[]} The final config object.
+ * @param options - Overriding options.
+ * @param userConfigs - Additional flat config items appended after the dx config.
+ * @returns The final config composer.
  */
 ```
 
-The linter will enforce this format as much as possible. See `.eslintrc` for details.
+The linter enforces this format as much as possible. See the `jsdoc/*` rules in `src/index.ts` for details.

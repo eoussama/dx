@@ -1,71 +1,121 @@
 <p align="center">
-  <img width="100" src="https://github.com/eoussama/dx/blob/main/assets/logo.png?raw=true">
+  <img width="100" alt="dx logo" src="https://github.com/eoussama/dx/blob/main/assets/logo.png?raw=true">
 </p>
 
-<p align="center">Personal developer-experience configs.</p>
+<p align="center">Personal ESLint config and linting CLI.</p>
 
 <p align="center">
-    <a href="https://github.com/eoussama/dx/blob/main/LICENSE" target="_blank"><img src="https://img.shields.io/github/license/eoussama/dx" /></a>
-    <a href="https://github.com/eoussama/dx/actions/workflows/publish.yml" target="_blank"><img src="https://github.com/eoussama/dx/actions/workflows/publish.yml/badge.svg" /></a>
-    <a href="https://www.npmjs.com/package/@eoussama/dx" target="_blank"><img src="https://img.shields.io/npm/v/%40eoussama%2Fdx" /></a>
-    <img src="https://img.shields.io/github/languages/code-size/eoussama/dx" />
+    <a href="https://github.com/eoussama/dx/blob/main/LICENSE" target="_blank"><img alt="License" src="https://img.shields.io/github/license/eoussama/dx" /></a>
+    <a href="https://github.com/eoussama/dx/actions/workflows/publish.yml" target="_blank"><img alt="Publish workflow status" src="https://github.com/eoussama/dx/actions/workflows/publish.yml/badge.svg" /></a>
+    <a href="https://www.npmjs.com/package/@eoussama/dx" target="_blank"><img alt="npm version" src="https://img.shields.io/npm/v/%40eoussama%2Fdx" /></a>
+    <img alt="Code size" src="https://img.shields.io/github/languages/code-size/eoussama/dx" />
 </p>
 
 ## Description
 
-DX is a personal developer-experience configuration toolkit. It provides a set of opinionated ESLint, stylistic, and code quality rules to help you maintain consistent, readable, and robust code across my JavaScript and TypeScript projects.
+DX is a personal developer-experience toolkit. It ships an opinionated ESLint flat config built on top of [`@antfu/eslint-config`](https://github.com/antfu/eslint-config), and a `dx` CLI with an interactive menu to lint, fix, set up and diagnose projects.
+
+## Requirements
+
+- Node.js `^20.19.0 || ^22.13.0 || >=24`
+- ESLint 10 (installed with dx)
+
+### TypeScript 7
+
+TypeScript 7 ships the native compiler without a JavaScript API, which typescript-eslint still needs. Keep TypeScript 6 installed as `typescript` and add TypeScript 7 under an alias for `tsc`:
+
+```bash
+pnpm add -D "typescript@npm:@typescript/typescript6@^6" "@typescript/native@npm:typescript@^7"
+```
+
+`dx doctor` warns when a project needs this.
 
 ## Installation
 
-Using [pnpm](https://pnpm.io):
-
 ```bash
-pnpm add @eoussama/dx
+pnpm add -D @eoussama/dx
 ```
 
-Or with npm:
-
 ```bash
-npm install @eoussama/dx
+npm install -D @eoussama/dx
 ```
 
-Or with yarn:
-
 ```bash
-yarn add @eoussama/dx
+yarn add -D @eoussama/dx
 ```
 
-## Usage
+## Quick start
 
-### Quick Start
+```bash
+pnpm dx init      # writes eslint.config.js (or .mjs for CommonJS packages)
+pnpm dx lint      # lint the project
+pnpm dx fix       # lint and apply automatic fixes
+```
 
-1. **Initialize the configuration:**
-   ```bash
-   pnpx @eoussama/dx init
-   ```
+Running `dx` without arguments opens an interactive menu:
 
-   This creates an `eslint.config.js` file with the default configuration:
-   ```js
-   import dx from "@eoussama/dx";
+```text
+┌  dx v0.1.0
+│
+│  project my-app
+│  config  eslint.config.js
+│
+◆  What do you want to do?
+│  ● Lint project
+│  ○ Fix project (apply automatic fixes)
+│  ○ Lint changed files (3 files)
+│  ○ Fix changed files (3 files)
+│  ○ Lint staged files (1 file)
+│  ○ Set up ESLint config
+│  ○ Doctor (check the project setup)
+│  ○ Inspect config (opens in the browser)
+│  ○ Exit
+└
+```
 
+When a project has no ESLint config, `dx lint` falls back to the built-in dx config, so it works in any folder.
 
+## CLI
 
-   export default dx();
-   ```
+```text
+dx                      Open the interactive menu
+dx lint [paths...]      Lint the project, or only the given paths
+dx fix [paths...]       Same as lint --fix
+dx init                 Create an eslint.config file that uses @eoussama/dx
+dx doctor               Check the project setup
+dx inspect              Open the ESLint config inspector in the browser
+```
 
-2. **Run the linter:**
-   ```bash
-   pnpx dx lint
-   ```
+### `dx lint`
 
-3. **Auto-fix issues:**
-   ```bash
-   pnpx dx lint --fix
-   ```
+| Option               | Description                                                    |
+| -------------------- | -------------------------------------------------------------- |
+| `--fix`              | Apply automatic fixes                                          |
+| `--changed`          | Only lint files changed since the last commit, plus untracked  |
+| `--staged`           | Only lint staged files, handy in a pre-commit hook             |
+| `--since <ref>`      | Only lint files changed since a git ref, for example `main`    |
+| `--cache`            | Only re-lint files that changed since the last cached run      |
+| `--quiet`            | Report errors only                                             |
+| `--max-warnings <n>` | Fail when there are more than `n` warnings                     |
+| `--format <name>`    | ESLint formatter, for example `stylish` or `json`              |
 
-### Manual Setup (Alternative)
+Exit codes: `0` no errors, `1` lint errors or too many warnings, `2` fatal error. Status messages go to stderr, so `dx lint --format json > report.json` stays clean.
 
-You can also manually create an `eslint.config.js` file at the root of your project:
+### `dx init`
+
+| Option      | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `--force`   | Replace existing config files (kept as `.bak`) and lint scripts   |
+| `--scripts` | Add `lint` and `lint:fix` scripts to `package.json`               |
+| `--vscode`  | Add fix-on-save settings to `.vscode/settings.json`               |
+| `--react`   | Enable React rules                                                |
+| `--svelte`  | Enable Svelte rules                                               |
+
+### `dx doctor`
+
+Checks the Node.js version, installed `@eoussama/dx` and `eslint` versions, the ESLint config (and that it loads), leftover `.eslintrc` or Prettier files, framework plugins and editor settings. It exits with `1` when a check fails.
+
+## Configuration
 
 ```js
 import dx from "@eoussama/dx";
@@ -75,9 +125,7 @@ import dx from "@eoussama/dx";
 export default dx();
 ```
 
-### Overriding Rules or Options (Optional)
-
-You can override any rules or options by passing them to the `dx` function:
+Options are merged on top of the dx defaults, so overriding one rule or one stylistic option keeps everything else:
 
 ```js
 import dx from "@eoussama/dx";
@@ -85,58 +133,60 @@ import dx from "@eoussama/dx";
 
 
 export default dx({
-  rules: {
-    // Override/add rules here
-    "no-console": "off",
-    "quotes": ["error", "single"],
-    // ...
-  },
-  // You can also override other options, e.g.:
+  // Any @antfu/eslint-config option works here.
   stylistic: {
     indent: 4,
-    semi: false,
+  },
+  rules: {
+    "no-console": "off",
   },
 });
 ```
 
-### CLI Commands
+Extra flat config items can be passed after the options:
 
-After installation, you can use the following commands:
+```js
+export default dx({}, {
+  files: ["scripts/**"],
+  rules: {
+    "no-console": "off",
+  },
+});
+```
+
+### React and Svelte
+
+Framework support is opt-in. Enable it and install the matching plugins:
+
+```js
+export default dx({ react: true });
+```
 
 ```bash
-# Initialize eslint.config.js (recommended first step)
-pnpx dx init
-
-# Run ESLint on your project
-pnpx dx lint
-
-# Run ESLint and auto-fix issues
-pnpx dx lint --fix
-
-# Get help
-pnpx dx --help
-pnpx dx init --help
-pnpx dx lint --help
-
-# Force overwrite existing config file
-pnpx dx init --force
+pnpm add -D @eslint-react/eslint-plugin eslint-plugin-react-refresh
 ```
+
+```js
+export default dx({ svelte: true });
+```
+
+```bash
+pnpm add -D eslint-plugin-svelte svelte-eslint-parser
+```
+
+`dx init --react` / `--svelte` and `dx doctor` print the exact install command for your package manager.
 
 ## Development
 
-To contribute or run the project locally:
-
 ```bash
-# 1. Clone the repository
-$ git clone https://github.com/eoussama/dx.git
-$ cd dx
-
-# 2. Install dependencies (requires pnpm)
-$ pnpm install
-
-# 3. Build the project
-$ pnpm build
+git clone https://github.com/eoussama/dx.git
+cd dx
+pnpm install
+pnpm build       # build dist/
+pnpm typecheck   # type check the sources
+pnpm lint        # lint this repository with its own config
+pnpm test        # build and run the CLI smoke tests
 ```
 
-- The main configuration is in `src/index.js`.
+- The config lives in `src/index.ts`, the CLI in `src/cli.ts` and `src/lib/`.
 - For contributing guidelines and documentation standards, see [CONTRIBUTING.md](./CONTRIBUTING.md).

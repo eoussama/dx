@@ -1,149 +1,315 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
-import { existsSync, writeFileSync } from "node:fs";
-import path from "node:path";
 import process from "node:process";
+import { parseArgs } from "node:util";
 
-import { Command } from "commander";
-import packageJson from "../package.json";
-
-
-
-const program = new Command();
-
-async function runESLint({ fix }: { fix: boolean }): Promise<void> {
-  try {
-    const args = ["eslint", "."];
-
-    if (fix) {
-      args.push("--fix");
-    }
-
-    // eslint-disable-next-line no-console
-    console.log(`🔍 Running ESLint${fix ? " with --fix" : ""}...`);
-
-    const eslintProcess = spawn("npx", args, {
-      stdio: "inherit",
-      cwd: process.cwd(),
-    });
-
-    eslintProcess.on("close", (code) => {
-      if (code === 0) {
-        if (fix) {
-          // eslint-disable-next-line no-console
-          console.log("✅ ESLint completed successfully with fixes applied.");
-        }
-        else {
-          // eslint-disable-next-line no-console
-          console.log("✅ ESLint completed successfully - no issues found.");
-        }
-      }
-      else if (code === 1) {
-        // eslint-disable-next-line no-console
-        console.log(`\n❌ ESLint found linting issues.${fix ? " Some may have been auto-fixed." : " Run with --fix to auto-fix issues."}`);
-        process.exit(1);
-      }
-      else if (code === 2) {
-        console.error("❌ ESLint encountered a fatal error.");
-        process.exit(2);
-      }
-      else {
-        console.error(`❌ ESLint exited with unexpected code: ${code}`);
-        process.exit(code || 1);
-      }
-    });
-
-    eslintProcess.on("error", (error) => {
-      if (error.message.includes("ENOENT")) {
-        console.error("❌ Error: npx or ESLint not found.");
-        console.error("💡 Make sure you have Node.js and npm/pnpm installed, and ESLint is available.");
-        console.error("   Try running: npm install eslint");
-      }
-      else {
-        console.error("❌ Error running ESLint:", error.message);
-      }
-      process.exit(1);
-    });
-  }
-  catch (error) {
-    if (error instanceof Error) {
-      console.error("❌ Error:", error.message);
-    }
-    else {
-      console.error("❌ Unknown error:", error);
-    }
-    process.exit(1);
-  }
-}
-
-async function initConfig({ force }: { force: boolean }): Promise<void> {
-  try {
-    const configPath = path.resolve(process.cwd(), "eslint.config.js");
-
-    // Check if file already exists
-    if (existsSync(configPath) && !force) {
-      console.error("❌ eslint.config.js already exists!");
-      console.error("💡 Use --force to overwrite the existing file.");
-      process.exit(1);
-    }
-
-    // Create the config file content
-    const configContent = `import dx from "@eoussama/dx";
+import { version } from "../package.json";
+import { describeInitStep, doctorExitCode, formatCheck, resolveScope, runLint } from "./lib/commands";
+import { c, errorMessage, log, print } from "./lib/term";
 
 
 
-export default dx();
-`;
+const HELP = `${c.bold("dx")} ${c.gray(`v${version}`)} - personal linting toolkit
 
-    writeFileSync(configPath, configContent, "utf8");
+${c.bold("Usage")}
+  dx                      Open the interactive menu
+  dx <command> [options]
 
-    if (force && existsSync(configPath)) {
-      // eslint-disable-next-line no-console
-      console.log("✅ eslint.config.js overwritten successfully!");
-    }
-    else {
-      // eslint-disable-next-line no-console
-      console.log("✅ eslint.config.js created successfully!");
-    }
+${c.bold("Commands")}
+  lint [paths...]         Lint the project, or only the given paths
+  fix [paths...]          Same as lint --fix
+  init                    Create an eslint.config file that uses @eoussama/dx
+  doctor                  Check the project setup
+  inspect                 Open the ESLint config inspector in the browser
 
-    // eslint-disable-next-line no-console
-    console.log("💡 You can now run 'dx lint' to check your code.");
-  }
-  catch (error) {
-    if (error instanceof Error) {
-      console.error("❌ Error creating config file:", error.message);
-    }
-    else {
-      console.error("❌ Unknown error:", error);
-    }
-    process.exit(1);
-  }
-}
+${c.bold("Options")}
+  -h, --help              Show help, also works per command
+  -v, --version           Show the version
 
-program
-  .name("dx")
-  .description("Developer experience helper CLI")
-  .version(packageJson.version);
+Run ${c.cyan("dx <command> --help")} for command options.`;
 
-program
-  .command("init")
-  .description("Create eslint.config.js file with @eoussama/dx configuration")
-  .option("--force", "Overwrite existing eslint.config.js file", false)
-  .action(async (opts) => {
-    await initConfig({ force: opts.force });
+const LINT_HELP = `${c.bold("dx lint")} [paths...] [options]
+
+Lints the project with its eslint.config file, or with the built-in dx config
+when the project has none.
+
+${c.bold("Options")}
+  --fix                   Apply automatic fixes
+  --changed               Only lint files changed since the last commit, including untracked ones
+  --staged                Only lint staged files
+  --since <ref>           Only lint files changed since a git ref, like main
+  --cache                 Only re-lint files that changed since the last cached run
+  --quiet                 Report errors only
+  --max-warnings <n>      Fail when there are more than n warnings
+  --format <name>         ESLint formatter, like stylish or json (default: stylish)
+  -h, --help              Show this help
+
+${c.bold("Exit codes")}
+  0 no errors, 1 lint errors or too many warnings, 2 fatal error`;
+
+const INIT_HELP = `${c.bold("dx init")} [options]
+
+Creates eslint.config.js in ESM packages, or eslint.config.mjs otherwise.
+
+${c.bold("Options")}
+  --force                 Replace existing config files (kept as .bak) and scripts
+  --scripts               Add lint and lint:fix scripts to package.json
+  --vscode                Add fix on save settings to .vscode/settings.json
+  --react                 Enable React rules
+  --svelte                Enable Svelte rules
+  -h, --help              Show this help`;
+
+const DOCTOR_HELP = `${c.bold("dx doctor")}
+
+Checks Node.js, installed packages, the ESLint config and editor setup.
+Exits with 1 when a check fails.`;
+
+const INSPECT_HELP = `${c.bold("dx inspect")}
+
+Opens @eslint/config-inspector for the project's ESLint config.`;
+
+/**
+ * @description
+ * Runs the lint command.
+ *
+ * @param args - Command arguments.
+ * @param fix - Whether fixing is forced by the command name.
+ * @returns The exit code.
+ */
+async function lintCommand(args: string[], fix: boolean): Promise<number> {
+  const { values, positionals } = parseArgs({
+    args,
+    allowPositionals: true,
+    options: {
+      "fix": { type: "boolean", default: fix },
+      "changed": { type: "boolean" },
+      "staged": { type: "boolean" },
+      "since": { type: "string" },
+      "cache": { type: "boolean" },
+      "quiet": { type: "boolean" },
+      "max-warnings": { type: "string" },
+      "format": { type: "string" },
+      "help": { type: "boolean", short: "h" },
+    },
   });
 
-program
-  .command("lint")
-  .description("Run ESLint on the project")
-  .option("--fix", "Automatically fix problems", false)
-  .action(async (opts) => {
-    await runESLint({ fix: opts.fix });
-  });
+  if (values.help) {
+    print(LINT_HELP);
 
-if (process.argv.length <= 2) {
-  program.help();
+    return 0;
+  }
+
+  const maxWarnings = values["max-warnings"] === undefined ? undefined : Number(values["max-warnings"]);
+
+  if (maxWarnings !== undefined && !Number.isInteger(maxWarnings)) {
+    throw new TypeError(`--max-warnings expects an integer, got "${values["max-warnings"]}".`);
+  }
+
+  const scope = resolveScope(values);
+
+  if (scope && positionals.length) {
+    throw new Error("Paths cannot be combined with --changed, --staged or --since.");
+  }
+
+  return runLint({
+    cwd: process.cwd(),
+    patterns: positionals,
+    scope,
+    fix: values.fix,
+    cache: values.cache,
+    quiet: values.quiet,
+    maxWarnings,
+    format: values.format,
+  });
 }
 
-program.parse(process.argv);
+/**
+ * @description
+ * Runs the init command.
+ *
+ * @param args - Command arguments.
+ * @returns The exit code.
+ */
+async function initCommand(args: string[]): Promise<number> {
+  const { values } = parseArgs({
+    args,
+    options: {
+      force: { type: "boolean" },
+      scripts: { type: "boolean" },
+      vscode: { type: "boolean" },
+      react: { type: "boolean" },
+      svelte: { type: "boolean" },
+      help: { type: "boolean", short: "h" },
+    },
+  });
+
+  if (values.help) {
+    print(INIT_HELP);
+
+    return 0;
+  }
+
+  const { init, InitError } = await import("./lib/init");
+  const { detectPackageManager, FRAMEWORKS, installCommand, installedVersion } = await import("./lib/project");
+  const cwd = process.cwd();
+  const frameworks = FRAMEWORKS.filter(framework => values[framework.id]);
+
+  try {
+    const steps = init({
+      cwd,
+      force: values.force,
+      scripts: values.scripts,
+      vscode: values.vscode,
+      frameworks: frameworks.map(framework => framework.id),
+    });
+
+    for (const step of steps) {
+      (step.kind === "skipped" ? log.warn : log.success)(describeInitStep(step));
+    }
+  }
+  catch (error) {
+    if (error instanceof InitError) {
+      log.error(error.message);
+
+      return 1;
+    }
+
+    throw error;
+  }
+
+  const missing = [
+    ...(installedVersion(cwd, "@eoussama/dx") ? [] : ["@eoussama/dx"]),
+    ...frameworks.flatMap(framework => framework.plugins).filter(name => !installedVersion(cwd, name)),
+  ];
+
+  if (missing.length) {
+    log.hint(`Install the missing packages: ${installCommand(detectPackageManager(cwd), missing)}`);
+  }
+
+  log.hint("Run `dx lint` to check your code.");
+
+  return 0;
+}
+
+/**
+ * @description
+ * Runs the doctor command.
+ *
+ * @param args - Command arguments.
+ * @returns The exit code.
+ */
+async function doctorCommand(args: string[]): Promise<number> {
+  const { values } = parseArgs({ args, options: { help: { type: "boolean", short: "h" } } });
+
+  if (values.help) {
+    print(DOCTOR_HELP);
+
+    return 0;
+  }
+
+  const { doctor } = await import("./lib/doctor");
+  const checks = await doctor(process.cwd());
+
+  checks.map(formatCheck).forEach(line => print(line));
+
+  return doctorExitCode(checks);
+}
+
+/**
+ * @description
+ * Runs the inspect command.
+ *
+ * @param args - Command arguments.
+ * @returns The exit code.
+ */
+async function inspectCommand(args: string[]): Promise<number> {
+  const { values } = parseArgs({ args, options: { help: { type: "boolean", short: "h" } } });
+
+  if (values.help) {
+    print(INSPECT_HELP);
+
+    return 0;
+  }
+
+  const { findFlatConfig } = await import("./lib/project");
+
+  if (!findFlatConfig(process.cwd())) {
+    log.error("No ESLint config file found. Run `dx init` first.");
+
+    return 1;
+  }
+
+  const { inspect } = await import("./lib/inspect");
+
+  return inspect(process.cwd());
+}
+
+/**
+ * @description
+ * Dispatches the command line arguments.
+ *
+ * @param argv - Arguments without the node and script paths.
+ * @returns The exit code.
+ */
+async function main(argv: string[]): Promise<number> {
+  const [command, ...args] = argv;
+
+  switch (command) {
+    case undefined:
+      if (process.stdin.isTTY && process.stdout.isTTY) {
+        const { tui } = await import("./lib/tui");
+
+        return tui(process.cwd());
+      }
+
+      print(HELP);
+
+      return 0;
+
+    case "-h":
+
+    case "--help":
+
+    case "help":
+      print(HELP);
+
+      return 0;
+
+    case "-v":
+
+    case "--version":
+      print(version);
+
+      return 0;
+
+    case "lint":
+      return lintCommand(args, false);
+
+    case "fix":
+      return lintCommand(args, true);
+
+    case "init":
+      return initCommand(args);
+
+    case "doctor":
+      return doctorCommand(args);
+
+    case "inspect":
+      return inspectCommand(args);
+
+    default:
+      log.error(`Unknown command "${command}".`);
+      print(HELP);
+
+      return 2;
+  }
+}
+
+main(process.argv.slice(2))
+  .then((code) => {
+    process.exitCode = code;
+  })
+  .catch((error: unknown) => {
+    log.error(errorMessage(error));
+    process.exitCode = 2;
+  });
