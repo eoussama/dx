@@ -55,7 +55,7 @@ pnpm dx fix       # lint and apply automatic fixes
 Running `dx` without arguments opens an interactive menu:
 
 ```text
-┌  dx v0.1.0
+┌  dx v0.1.1
 │
 │  project my-app
 │  config  eslint.config.js
