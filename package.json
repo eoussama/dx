@@ -59,7 +59,7 @@
     "fix": "node dist/cli.mjs fix",
     "test": "node --test",
     "prepack": "pnpm build",
-    "check": "pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm build && pnpm test"
+    "check": "pnpm install --frozen-lockfile && pnpm typecheck && pnpm build && pnpm lint && pnpm test"
   },
   "peerDependencies": {
     "@eslint-react/eslint-plugin": "^5.6.0",
