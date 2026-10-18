@@ -149,6 +149,7 @@ export function readPackageJson(file: string): PackageJson | undefined {
   try {
     return JSON.parse(readFileSync(file, "utf8")) as PackageJson;
   }
+  // Stryker disable next-line BlockStatement: an empty catch returns undefined too.
   catch {
     return undefined;
   }

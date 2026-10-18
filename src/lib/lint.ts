@@ -45,8 +45,8 @@ export interface LintReport {
  * @returns The task result.
  */
 async function withoutConcurrencyWarnings<T>(task: () => Promise<T>): Promise<T> {
-  const original = Object.getOwnPropertyDescriptor(process, "emitWarning");
-  const emitWarning = process.emitWarning.bind(process);
+  const original = process.emitWarning;
+  const emitWarning = original.bind(process);
 
   /**
    * @description
@@ -67,9 +67,7 @@ async function withoutConcurrencyWarnings<T>(task: () => Promise<T>): Promise<T>
     return await task();
   }
   finally {
-    if (original) {
-      Object.defineProperty(process, "emitWarning", original);
-    }
+    process.emitWarning = original;
   }
 }
 
@@ -127,6 +125,7 @@ export async function lint(options: LintOptions): Promise<LintReport> {
     return { eslint: instance, results: await instance.lintFiles(patterns) };
   });
 
+  // Stryker disable next-line ConditionalExpression: without fix, ESLint leaves no fixes to write.
   if (options.fix) {
     await ESLint.outputFixes(results);
   }

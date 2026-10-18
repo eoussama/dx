@@ -68,14 +68,11 @@ function major(version: string): number {
  * @returns Whether rules of the framework are configured.
  */
 async function isFrameworkEnabled(eslint: ESLint | undefined, root: string, framework: Framework): Promise<boolean> {
-  try {
-    const config = await eslint?.calculateConfigForFile(path.join(root, framework.sampleFile)) as Linter.Config | undefined;
+  // A config that fails to load, or that ignores the file, enables nothing.
+  const config = await eslint?.calculateConfigForFile(path.join(root, framework.sampleFile))
+    .catch(() => undefined) as Linter.Config | undefined;
 
-    return Object.keys(config?.rules ?? {}).some(rule => rule.startsWith(`${framework.id}/`));
-  }
-  catch {
-    return false;
-  }
+  return Object.keys(config?.rules ?? {}).some(rule => rule.startsWith(`${framework.id}/`));
 }
 
 /**
@@ -101,7 +98,7 @@ export async function doctor(cwd: string): Promise<Check[]> {
   const manifest = findPackageJson(root);
 
   if (manifest) {
-    add("ok", "package.json", `${path.relative(root, manifest.file) || "package.json"} (${manifest.pkg.type === "module" ? "ESM" : "CommonJS"})`);
+    add("ok", "package.json", `${path.relative(root, manifest.file)} (${manifest.pkg.type === "module" ? "ESM" : "CommonJS"})`);
   }
   else {
     add("warn", "package.json", "not found, dx init will write eslint.config.mjs");
@@ -146,7 +143,7 @@ export async function doctor(cwd: string): Promise<Check[]> {
   else {
     const usesDx = readFileSync(configFile, "utf8").includes("@eoussama/dx");
 
-    add(usesDx ? "ok" : "warn", "ESLint config", `${path.relative(root, configFile) || configFile}${usesDx ? "" : " does not import @eoussama/dx"}`);
+    add(usesDx ? "ok" : "warn", "ESLint config", `${path.relative(root, configFile)}${usesDx ? "" : " does not import @eoussama/dx"}`);
   }
 
   process.env[DX_CLI_ENV] = "1";
@@ -163,7 +160,7 @@ export async function doctor(cwd: string): Promise<Check[]> {
     add("ok", "Config loads", "no errors");
   }
   catch (error) {
-    add("error", "Config loads", errorMessage(error).split("\n")[0] ?? "unknown error");
+    add("error", "Config loads", errorMessage(error).split("\n")[0]!);
   }
 
   const legacy = existingFiles(root, LEGACY_CONFIG_FILES);
@@ -199,7 +196,9 @@ export async function doctor(cwd: string): Promise<Check[]> {
   const vscodeSettings = path.join(root, ".vscode", "settings.json");
 
   if (existsSync(path.join(root, ".vscode"))) {
-    const configured = existsSync(vscodeSettings) && readFileSync(vscodeSettings, "utf8").includes("source.fixAll.eslint");
+    // Stryker disable next-line StringLiteral: Buffer#includes finds the text without an encoding too.
+    const settings = existsSync(vscodeSettings) ? readFileSync(vscodeSettings, "utf8") : "";
+    const configured = settings.includes("source.fixAll.eslint");
 
     add(configured ? "ok" : "info", "VS Code", configured ? "fix on save configured" : "run dx init --vscode to enable fix on save");
   }

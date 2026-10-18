@@ -185,8 +185,13 @@ pnpm install
 pnpm build       # build dist/
 pnpm typecheck   # type check the sources with the TypeScript 7 native compiler
 pnpm lint        # lint this repository with its own config
-pnpm test        # build and run the CLI smoke tests
+pnpm test        # run the unit tests, then the CLI smoke tests against dist/
+pnpm test:unit       # unit tests, run against the TypeScript sources
+pnpm test:coverage   # unit tests with coverage, fails below 100% lines and functions, 90% branches
+pnpm test:mutation   # mutation tests with Stryker, manual only, report in reports/mutation/index.html
 ```
 
 - The config lives in `src/index.ts`, the CLI in `src/cli.ts` and `src/lib/`.
+- Unit tests live in `test/unit/`, one file per source module. `test/register.mjs` lets Node load the sources directly, so they need no build.
+- The CLI smoke tests in `test/cli.test.mjs` run the built `dist/`, so run `pnpm build` first.
 - For contributing guidelines and documentation standards, see [CONTRIBUTING.md](./CONTRIBUTING.md).

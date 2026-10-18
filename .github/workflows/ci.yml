@@ -36,12 +36,15 @@ jobs:
     - name: Typecheck
       run: pnpm typecheck
 
-    # Lint and test run the built CLI from dist/.
+    - name: Unit Tests
+      run: pnpm test:coverage
+
+    # Lint and the CLI tests run the built CLI from dist/.
     - name: Build
       run: pnpm build
 
     - name: Lint
       run: pnpm lint
 
-    - name: Test
-      run: pnpm test
+    - name: CLI Tests
+      run: pnpm test:cli

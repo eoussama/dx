@@ -4,33 +4,43 @@ import process from "node:process";
 
 type Paint = (text: string | number) => string;
 
-const env = process.env;
-
-const colorEnabled = !("NO_COLOR" in env)
-  && ("FORCE_COLOR" in env || (process.stdout.isTTY === true && env.TERM !== "dumb"));
+export type Colors = Record<"bold" | "dim" | "red" | "green" | "yellow" | "blue" | "cyan" | "gray", Paint>;
 
 /**
  * @description
- * Builds an ANSI color function that is a no-op when colors are disabled.
+ * Decides whether to print colors, honoring NO_COLOR and FORCE_COLOR.
  *
- * @param open - Opening SGR code.
- * @param close - Closing SGR code.
- * @returns The paint function.
+ * @param env - Environment variables.
+ * @param isTTY - Whether the output is a terminal.
+ * @returns Whether colors are enabled.
  */
-function paint(open: number, close: number): Paint {
-  return text => colorEnabled ? `\u001B[${open}m${text}\u001B[${close}m` : String(text);
+export function supportsColor(env: NodeJS.ProcessEnv, isTTY: boolean | undefined): boolean {
+  return !("NO_COLOR" in env) && ("FORCE_COLOR" in env || (isTTY === true && env.TERM !== "dumb"));
 }
 
-export const c = {
-  bold: paint(1, 22),
-  dim: paint(2, 22),
-  red: paint(31, 39),
-  green: paint(32, 39),
-  yellow: paint(33, 39),
-  blue: paint(34, 39),
-  cyan: paint(36, 39),
-  gray: paint(90, 39),
-};
+/**
+ * @description
+ * Builds the ANSI color functions, which are no-ops when colors are disabled.
+ *
+ * @param enabled - Whether colors are enabled.
+ * @returns The color functions.
+ */
+export function createColors(enabled: boolean): Colors {
+  const paint = (open: number, close: number): Paint => text => enabled ? `\u001B[${open}m${text}\u001B[${close}m` : String(text);
+
+  return {
+    bold: paint(1, 22),
+    dim: paint(2, 22),
+    red: paint(31, 39),
+    green: paint(32, 39),
+    yellow: paint(33, 39),
+    blue: paint(34, 39),
+    cyan: paint(36, 39),
+    gray: paint(90, 39),
+  };
+}
+
+export const c: Colors = createColors(supportsColor(process.env, process.stdout.isTTY));
 
 /**
  * @description
