@@ -6,7 +6,7 @@
 
 <p align="center">
     <a href="https://github.com/eoussama/dx/blob/main/LICENSE" target="_blank"><img alt="License" src="https://img.shields.io/github/license/eoussama/dx" /></a>
-    <a href="https://github.com/eoussama/dx/actions/workflows/publish.yml" target="_blank"><img alt="Publish workflow status" src="https://github.com/eoussama/dx/actions/workflows/publish.yml/badge.svg" /></a>
+    <a href="https://github.com/eoussama/dx/actions/workflows/ci.yml" target="_blank"><img alt="CI status" src="https://github.com/eoussama/dx/actions/workflows/ci.yml/badge.svg" /></a>
     <a href="https://www.npmjs.com/package/@eoussama/dx" target="_blank"><img alt="npm version" src="https://img.shields.io/npm/v/%40eoussama%2Fdx" /></a>
     <img alt="Code size" src="https://img.shields.io/github/languages/code-size/eoussama/dx" />
 </p>
