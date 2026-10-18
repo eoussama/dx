@@ -1,0 +1,7 @@
+minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
+shellEmulator: true
+# katex is only used through @antfu/eslint-config > @eslint/markdown > micromark-extension-math,
+# which still asks for ^0.16. Force the release that fixes GHSA-238p-pmpm-9mq7.
+overrides:
+  katex: ^0.19.0

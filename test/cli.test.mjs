@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -19,6 +19,7 @@ const dirs = [];
 
 const BAD = "const unused = 1\nconsole.log('hi')\n";
 const GOOD = "export const value = 1;\n";
+const WARNING = "export function value() {}\n";
 
 /**
  * @description
@@ -41,7 +42,8 @@ function project(files = {}) {
 
 /**
  * @description
- * Runs the dx CLI.
+ * Runs the dx CLI. It runs asynchronously, so the test runner can report each test as soon
+ * as it finishes instead of waiting for the blocked process.
  *
  * @param args - CLI arguments.
  * @param cwd - Working directory.
@@ -52,9 +54,20 @@ function dxCli(args, cwd = root) {
 
   delete env.FORCE_COLOR;
 
-  const result = spawnSync(process.execPath, [cli, ...args], { cwd, encoding: "utf8", env });
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [cli, ...args], { cwd, env });
+    let stdout = "";
+    let stderr = "";
 
-  return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+    child.stdout.setEncoding("utf8").on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.setEncoding("utf8").on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", status => resolve({ status, stdout, stderr }));
+  });
 }
 
 /**
@@ -71,40 +84,40 @@ function git(cwd, args) {
 after(() => dirs.forEach(dir => rmSync(dir, { recursive: true, force: true })));
 
 describe("cli", () => {
-  it("prints the version", () => {
-    const { status, stdout } = dxCli(["--version"]);
+  it("prints the version", async () => {
+    const { status, stdout } = await dxCli(["--version"]);
 
     assert.equal(status, 0);
     assert.equal(stdout.trim(), pkg.version);
   });
 
-  it("prints help without a TTY and contains no emojis", () => {
-    const { status, stdout } = dxCli([]);
+  it("prints help without a TTY and contains no emojis", async () => {
+    const { status, stdout } = await dxCli([]);
 
     assert.equal(status, 0);
     assert.match(stdout, /Commands/);
     assert.doesNotMatch(stdout, /\p{Extended_Pictographic}/u);
   });
 
-  it("rejects unknown commands and options", () => {
-    assert.equal(dxCli(["nope"]).status, 2);
-    assert.equal(dxCli(["lint", "--nope"]).status, 2);
-    assert.equal(dxCli(["lint", "--changed", "--staged"]).status, 2);
+  it("rejects unknown commands and options", async () => {
+    assert.equal((await dxCli(["nope"])).status, 2);
+    assert.equal((await dxCli(["lint", "--nope"])).status, 2);
+    assert.equal((await dxCli(["lint", "--changed", "--staged"])).status, 2);
   });
 });
 
 describe("init", () => {
-  it("writes eslint.config.mjs for CommonJS packages", () => {
+  it("writes eslint.config.mjs for CommonJS packages", async () => {
     const dir = project({ "package.json": "{}" });
 
-    assert.equal(dxCli(["init"], dir).status, 0);
+    assert.equal((await dxCli(["init"], dir)).status, 0);
     assert.ok(existsSync(path.join(dir, "eslint.config.mjs")));
   });
 
-  it("writes eslint.config.js for ESM packages, with frameworks and scripts", () => {
+  it("writes eslint.config.js for ESM packages, with frameworks and scripts", async () => {
     const dir = project({ "package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {}\n}\n" });
 
-    assert.equal(dxCli(["init", "--react", "--scripts"], dir).status, 0);
+    assert.equal((await dxCli(["init", "--react", "--scripts"], dir)).status, 0);
     assert.match(readFileSync(path.join(dir, "eslint.config.js"), "utf8"), /react: true/);
 
     const manifest = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8"));
@@ -116,68 +129,102 @@ describe("init", () => {
     assert.equal(scripts["lint:fix"], "dx lint --fix");
   });
 
-  it("refuses to overwrite and backs up with --force", () => {
+  it("refuses to overwrite and backs up with --force", async () => {
     const dir = project({ "package.json": "{}", "eslint.config.mjs": "export default [];\n" });
 
-    assert.equal(dxCli(["init"], dir).status, 1);
-    assert.equal(dxCli(["init", "--force"], dir).status, 0);
+    assert.equal((await dxCli(["init"], dir)).status, 1);
+    assert.equal((await dxCli(["init", "--force"], dir)).status, 0);
     assert.equal(readFileSync(path.join(dir, "eslint.config.mjs.bak"), "utf8"), "export default [];\n");
   });
 });
 
 describe("lint", () => {
-  it("falls back to the built-in config and reports errors", () => {
+  it("falls back to the built-in config and reports errors", async () => {
     const dir = project({ "bad.js": BAD });
-    const { status, stdout, stderr } = dxCli(["lint"], dir);
+    const { status, stdout, stderr } = await dxCli(["lint"], dir);
 
     assert.equal(status, 1);
     assert.match(stdout, /no-console/);
     assert.match(stderr, /built-in dx defaults/);
   });
 
-  it("passes on clean code", () => {
+  it("passes on clean code", async () => {
     const dir = project({ "good.js": GOOD });
 
-    assert.equal(dxCli(["lint"], dir).status, 0);
+    assert.equal((await dxCli(["lint"], dir)).status, 0);
   });
 
-  it("fixes files", () => {
+  it("fixes files", async () => {
     const dir = project({ "fixable.js": "export const value = 'a'\n" });
 
-    assert.equal(dxCli(["fix"], dir).status, 0);
+    assert.equal((await dxCli(["fix"], dir)).status, 0);
     assert.equal(readFileSync(path.join(dir, "fixable.js"), "utf8"), "export const value = \"a\";\n");
   });
 
-  it("keeps stdout clean for machine readable formats", () => {
+  it("keeps stdout clean for machine readable formats", async () => {
     const dir = project({ "bad.js": BAD });
-    const { stdout } = dxCli(["lint", "--format", "json"], dir);
+    const { stdout } = await dxCli(["lint", "--format", "json"], dir);
 
     assert.ok(Array.isArray(JSON.parse(stdout)));
   });
 
-  it("only lints changed and staged files", () => {
+  it("only lints changed and staged files", async () => {
     const dir = project({ "committed.js": BAD });
 
     git(dir, ["init", "-q"]);
     git(dir, ["add", "."]);
     git(dir, ["commit", "-qm", "init"]);
 
-    assert.equal(dxCli(["lint", "--changed"], dir).status, 0);
+    assert.equal((await dxCli(["lint", "--changed"], dir)).status, 0);
 
     writeFileSync(path.join(dir, "new.js"), BAD);
 
-    const changed = dxCli(["lint", "--changed"], dir);
+    const changed = await dxCli(["lint", "--changed"], dir);
 
     assert.equal(changed.status, 1);
     assert.match(changed.stdout, /new\.js/);
     assert.doesNotMatch(changed.stdout, /committed\.js/);
-    assert.equal(dxCli(["lint", "--staged"], dir).status, 0);
+    assert.equal((await dxCli(["lint", "--staged"], dir)).status, 0);
   });
 
-  it("fails outside of git when a git scope is requested", () => {
+  it("lints large projects with worker threads, with quiet and warning limits", async () => {
+    // 120 files make ESLint start worker threads, which rebuild the dx options on their own.
+    const files = Object.fromEntries(Array.from({ length: 120 }, (_, index) => [`file${index}.js`, WARNING]));
+    const dir = project({ ...files, "bad.js": BAD });
+
+    const all = await dxCli(["lint", "--format", "json"], dir);
+    const results = JSON.parse(all.stdout);
+
+    assert.equal(all.status, 1);
+    assert.equal(results.length, 121);
+    assert.equal(results.reduce((total, result) => total + result.warningCount, 0), 120);
+    assert.doesNotMatch(all.stderr, /Warning/);
+
+    const quiet = JSON.parse((await dxCli(["lint", "--quiet", "--format", "json"], dir)).stdout);
+
+    assert.equal(quiet.length, 1);
+    assert.ok(quiet[0].messages.every(message => message.severity === 2));
+
+    rmSync(path.join(dir, "bad.js"));
+
+    assert.equal((await dxCli(["lint", "--max-warnings", "120"], dir)).status, 0);
+    assert.equal((await dxCli(["lint", "--max-warnings", "119"], dir)).status, 1);
+  });
+
+  it("fixes files with worker threads", async () => {
+    const files = Object.fromEntries(Array.from({ length: 120 }, (_, index) => [`file${index}.js`, "export const value = 'a'\n"]));
+    const dir = project(files);
+    const { status, stderr } = await dxCli(["fix"], dir);
+
+    assert.equal(status, 0);
+    assert.match(stderr, /fixed 120 files/);
+    assert.equal(readFileSync(path.join(dir, "file119.js"), "utf8"), "export const value = \"a\";\n");
+  });
+
+  it("fails outside of git when a git scope is requested", async () => {
     const dir = project({ "good.js": GOOD });
 
-    assert.equal(dxCli(["lint", "--staged"], dir).status, 2);
+    assert.equal((await dxCli(["lint", "--staged"], dir)).status, 2);
   });
 });
 

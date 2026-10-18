@@ -5,7 +5,7 @@ import { defineConfig } from "tsdown";
 
 const shared = {
   platform: "node",
-  target: "node20.19",
+  target: "node24",
   outDir: "dist",
 } as const;
 
@@ -48,9 +48,10 @@ export default defineConfig([
     format: ["esm", "cjs"],
     clean: true,
     dts: {
-      // Declarations are emitted by the TypeScript 7 native compiler.
-      generator: "tsgo",
-      tsgo: { path: "node_modules/@typescript/native/bin/tsc" },
+      // Oxc emits the declarations from the annotations alone, which the public entry provides
+      // (isolatedDeclarations), and fails the build when an export is missing one.
+      // Type checking stays with the TypeScript 7 native compiler, see the typecheck script.
+      generator: "oxc",
     },
     hooks: {
       "build:done": () => fixCjsDeclarations("dist/index.d.cts"),
@@ -58,7 +59,8 @@ export default defineConfig([
   },
   {
     ...shared,
-    entry: { cli: "src/cli.ts" },
+    // eslint-options is loaded by URL, in the main thread and in ESLint's worker threads.
+    entry: { "cli": "src/cli.ts", "eslint-options": "src/eslint-options.ts" },
     format: "esm",
     clean: false,
     dts: false,

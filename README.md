@@ -17,7 +17,7 @@ DX is a personal developer-experience toolkit. It ships an opinionated ESLint fl
 
 ## Requirements
 
-- Node.js `^20.19.0 || ^22.13.0 || >=24`
+- Node.js `>=24`
 - ESLint 10 (installed with dx)
 
 ### TypeScript 7
@@ -55,7 +55,7 @@ pnpm dx fix       # lint and apply automatic fixes
 Running `dx` without arguments opens an interactive menu:
 
 ```text
-┌  dx v0.1.1
+┌  dx v0.1.2
 │
 │  project my-app
 │  config  eslint.config.js
@@ -183,7 +183,7 @@ git clone https://github.com/eoussama/dx.git
 cd dx
 pnpm install
 pnpm build       # build dist/
-pnpm typecheck   # type check the sources
+pnpm typecheck   # type check the sources with the TypeScript 7 native compiler
 pnpm lint        # lint this repository with its own config
 pnpm test        # build and run the CLI smoke tests
 ```

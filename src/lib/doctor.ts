@@ -32,7 +32,7 @@ export interface Check {
   detail: string;
 }
 
-export const NODE_RANGE = "^20.19.0 || ^22.13.0 || >=24";
+export const NODE_RANGE = ">=24";
 
 /**
  * @description
@@ -42,9 +42,9 @@ export const NODE_RANGE = "^20.19.0 || ^22.13.0 || >=24";
  * @returns Whether the version is supported.
  */
 export function isSupportedNode(version: string): boolean {
-  const [nodeMajor = 0, nodeMinor = 0] = version.split(".").map(Number);
+  const [nodeMajor = 0] = version.split(".").map(Number);
 
-  return (nodeMajor === 20 && nodeMinor >= 19) || (nodeMajor === 22 && nodeMinor >= 13) || nodeMajor >= 24;
+  return nodeMajor >= 24;
 }
 
 /**

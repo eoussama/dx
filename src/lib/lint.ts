@@ -1,11 +1,11 @@
-import type { Linter } from "eslint";
+import type { EslintParams } from "./eslint-options";
 import type { GitScope } from "./git";
 import path from "node:path";
 import process from "node:process";
 
 import { ESLint } from "eslint";
-import dx from "../index";
 import { DX_CLI_ENV } from "../shared";
+import { encodeParams } from "./eslint-options";
 import { gitFiles } from "./git";
 import { findFlatConfig } from "./project";
 
@@ -37,8 +37,46 @@ export interface LintReport {
 
 /**
  * @description
+ * Runs a task while dropping ESLint's poor concurrency warnings, which would end up in the
+ * middle of the dx output. ESLint keeps a reference to process.emitWarning from the moment
+ * an instance is created, so the task has to create the instance.
+ *
+ * @param task - The task.
+ * @returns The task result.
+ */
+async function withoutConcurrencyWarnings<T>(task: () => Promise<T>): Promise<T> {
+  const original = Object.getOwnPropertyDescriptor(process, "emitWarning");
+  const emitWarning = process.emitWarning.bind(process);
+
+  /**
+   * @description
+   * Forwards every warning except the poor concurrency one.
+   *
+   * @param warning - The warning.
+   * @param args - The warning type or options.
+   */
+  process.emitWarning = (warning: string | Error, ...args: unknown[]) => {
+    const type = typeof args[0] === "string" ? args[0] : (args[0] as { type?: string } | undefined)?.type;
+
+    if (type !== "ESLintPoorConcurrencyWarning") {
+      Reflect.apply(emitWarning, process, [warning, ...args]);
+    }
+  };
+
+  try {
+    return await task();
+  }
+  finally {
+    if (original) {
+      Object.defineProperty(process, "emitWarning", original);
+    }
+  }
+}
+
+/**
+ * @description
  * Runs ESLint with the project's flat config, falling back to the built-in dx config
- * when the project has none.
+ * when the project has none. Large projects are linted with worker threads.
  *
  * @param options - Lint options.
  * @returns The lint report.
@@ -67,19 +105,27 @@ export async function lint(options: LintOptions): Promise<LintReport> {
     };
   }
 
-  const eslint = new ESLint({
+  const params: EslintParams = {
     cwd,
     fix: options.fix ?? false,
     cache: options.cache ?? false,
     cacheLocation: path.join(cwd, "node_modules", ".cache", "dx", "eslintcache"),
-    cacheStrategy: "content",
-    errorOnUnmatchedPattern: !fromGit,
-    warnIgnored: !fromGit,
-    ...(options.quiet ? { ruleFilter: ({ severity }: { severity: number }) => severity === 2 } : {}),
-    ...(configFile ? {} : { overrideConfigFile: true, overrideConfig: await dx() as Linter.Config[] }),
-  });
+    quiet: options.quiet ?? false,
+    fromGit,
+    builtIn: !configFile,
+    concurrency: "auto",
+  };
 
-  const results = await eslint.lintFiles(patterns);
+  // Worker threads load the options from this module, so options that are functions work too.
+  const url = new URL("./eslint-options.mjs", import.meta.url);
+
+  url.searchParams.set("p", encodeParams(params));
+
+  const { eslint, results } = await withoutConcurrencyWarnings(async () => {
+    const instance = await ESLint.fromOptionsModule(url);
+
+    return { eslint: instance, results: await instance.lintFiles(patterns) };
+  });
 
   if (options.fix) {
     await ESLint.outputFixes(results);

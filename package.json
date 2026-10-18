@@ -1,8 +1,8 @@
 {
   "name": "@eoussama/dx",
   "type": "module",
-  "version": "0.1.1",
-  "packageManager": "pnpm@9.15.9+sha512.68046141893c66fad01c079231128e9afb89ef87e2691d69e4d40eee228988295fd4682181bae55b58418c3a253bde65a505ec7c5f9403ece5cc3cd37dcf2531",
+  "version": "0.1.2",
+  "packageManager": "pnpm@12.14.0+sha512.c18ba6d87993d3d164cb5e8948f32b2c06ee854487e06cd8d86781342fb3e5bb4634367034711e86802baa9c37bea906ce1929ad08d70884c97d801df13389a6",
   "description": "Personal ESLint config and linting CLI, built on @antfu/eslint-config.",
   "author": "eoussama",
   "license": "MIT",
@@ -49,16 +49,17 @@
     "dist"
   ],
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24"
+    "node": ">=24"
   },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "pnpm build && node dist/cli.mjs lint",
-    "fix": "pnpm build && node dist/cli.mjs fix",
-    "test": "pnpm build && node --test",
-    "prepack": "pnpm build"
+    "lint": "node dist/cli.mjs lint",
+    "fix": "node dist/cli.mjs fix",
+    "test": "node --test",
+    "prepack": "pnpm build",
+    "check": "pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm build && pnpm test"
   },
   "peerDependencies": {
     "@eslint-react/eslint-plugin": "^5.6.0",
@@ -83,17 +84,17 @@
   "dependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "@clack/prompts": "^1.8.1",
-    "eslint": "^10.11.0"
+    "eslint": "^10.13.0"
   },
   "devDependencies": {
-    "@eslint-react/eslint-plugin": "^5.23.3",
-    "@types/node": "^26.6.4",
+    "@eslint-react/eslint-plugin": "^5.28.1",
+    "@types/node": "^24.19.2",
     "@typescript/native": "npm:typescript@^7.0.2",
     "eslint-plugin-react-refresh": "^0.5.7",
-    "eslint-plugin-svelte": "^3.23.0",
-    "svelte": "^5.57.1",
-    "svelte-eslint-parser": "^1.8.1",
-    "tsdown": "^0.23.0",
+    "eslint-plugin-svelte": "^3.23.1",
+    "svelte": "^5.57.2",
+    "svelte-eslint-parser": "^1.9.0",
+    "tsdown": "^0.23.1",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }

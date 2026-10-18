@@ -33,7 +33,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v7
       with:
-        node-version: 24
+        node-version-file: .nvmrc
         cache: pnpm
         registry-url: "https://registry.npmjs.org/"
 
@@ -46,6 +46,9 @@ jobs:
 
     - name: Typecheck
       run: pnpm typecheck
+
+    - name: Lint
+      run: pnpm lint
 
     - name: Test
       run: pnpm test
@@ -70,7 +73,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v7
       with:
-        node-version: 24
+        node-version-file: .nvmrc
         cache: pnpm
         registry-url: "https://npm.pkg.github.com"
 
